@@ -1,6 +1,4 @@
-# SpecRepro: Structured Specification-Driven Paper Reproduction
-
-> **Research Proposal** — Automatic Paper Reproduction via Structured Intermediate Specifications
+# SpecRepro: Structured Specification Driven Paper Reproduction
 
 ---
 
