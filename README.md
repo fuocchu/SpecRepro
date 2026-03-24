@@ -33,40 +33,7 @@ that is updated live as the pipeline runs, giving a **coverage score** at every 
 ---
 
 ## Pipeline Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     SpecRepro Pipeline                          │
-│                                                                 │
-│  Paper Text                                                     │
-│      │                                                          │
-│      ▼                                                          │
-│  ┌──────────────┐                                               │
-│  │ SpecExtractor│  LLM reads paper → structured PaperSpec JSON │
-│  └──────┬───────┘                                               │
-│         │  PaperSpec (all items: pending)                       │
-│         ▼                                                       │
-│  ┌──────────────┐                                               │
-│  │  CodeAgent   │  Data Acquisition → validate dataloader       │
-│  │  (modular)   │  Component Gen    → one call per component    │
-│  │              │  Algorithm Gen    → one call per algorithm     │
-│  │              │  Training Loop    → full train+eval code       │
-│  └──────┬───────┘                                               │
-│         │  Generated Code  +  Updated PaperSpec statuses        │
-│         ▼                                                       │
-│  ┌──────────────┐                                               │
-│  │ CoverageCheck│  For each spec item: is it in the code?       │
-│  └──────┬───────┘                                               │
-│         │  Coverage Report (% implemented)                      │
-│         ▼                                                       │
-│  ┌──────────────┐                                               │
-│  │ ResultVerify │  Run code → parse "METRIC name: value" lines  │
-│  └──────┬───────┘  Compare against spec expected_value          │
-│         │                                                       │
-│         ▼                                                       │
-│  SpecRepro Score = 0.4·Coverage + 0.4·Alignment + 0.2·Quality  │
-└─────────────────────────────────────────────────────────────────┘
-```
+<img width="3888" height="880" alt="image" src="https://github.com/user-attachments/assets/d2b5c770-908b-4b08-87f3-6cdc0f404110" />
 
 ## Quick Start
 
