@@ -1,0 +1,11 @@
+{
+  "specrepro_score": 0.5556,
+  "coverage_score": 0.8889,
+  "alignment_score": 0.0,
+  "quality_score": 1.0,
+  "weights": {
+    "coverage": 0.4,
+    "alignment": 0.4,
+    "quality": 0.2
+  }
+}

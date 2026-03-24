@@ -1,0 +1,161 @@
+{
+  "title": "Decoupled Knowledge Distillation",
+  "arxiv_id": "2203.08679",
+  "task": "Reproduce the DKD experiment on CIFAR-100 with teacher=ResNet32x4 and student=ResNet8x4, reporting Top-1 accuracy.",
+  "model_components": [
+    {
+      "name": "Teacher: ResNet32x4",
+      "description": "ResNet with width multiplier 4, used as the teacher network. Pre-trained on CIFAR-100 achieving 79.42% top-1 accuracy.",
+      "hyperparams": {
+        "architecture": "ResNet32x4",
+        "top1_accuracy": 79.42
+      },
+      "input_shape": "(B, 3, 32, 32)",
+      "output_shape": "(B, 100)",
+      "status": "implemented"
+    },
+    {
+      "name": "Student: ResNet8x4",
+      "description": "ResNet with width multiplier 4 and fewer layers, used as the student network. Baseline (vanilla) top-1 accuracy is 72.50%.",
+      "hyperparams": {
+        "architecture": "ResNet8x4",
+        "baseline_top1": 72.5
+      },
+      "input_shape": "(B, 3, 32, 32)",
+      "output_shape": "(B, 100)",
+      "status": "implemented"
+    }
+  ],
+  "algorithms": [
+    {
+      "name": "TCKD (Target Class Knowledge Distillation)",
+      "description": "Binary logit distillation for the target class. Defined as KL(b^T || b^S) where b = [p_t, p_{\\t}] are binary probabilities of target vs. all non-target classes. p_t = exp(z_t) / sum_j exp(z_j), p_{\\t} = 1 - p_t.",
+      "inputs": [
+        "student_logits",
+        "teacher_logits",
+        "labels",
+        "temperature T"
+      ],
+      "outputs": [
+        "TCKD_loss"
+      ],
+      "status": "implemented"
+    },
+    {
+      "name": "NCKD (Non-Target Class Knowledge Distillation)",
+      "description": "Multi-category logit distillation among non-target classes. Defined as KL(p_hat^T || p_hat^S) where p_hat_i = exp(z_i) / sum_{j != t} exp(z_j) for i != t.",
+      "inputs": [
+        "student_logits",
+        "teacher_logits",
+        "labels",
+        "temperature T"
+      ],
+      "outputs": [
+        "NCKD_loss"
+      ],
+      "status": "implemented"
+    },
+    {
+      "name": "DKD (Decoupled Knowledge Distillation)",
+      "description": "DKD = alpha * TCKD + beta * NCKD, scaled by T^2. Decouples the coupling in classical KD where NCKD weight was (1 - p_t^T). Uses independent hyperparameters alpha and beta for TCKD and NCKD respectively.",
+      "inputs": [
+        "student_logits",
+        "teacher_logits",
+        "labels",
+        "temperature T",
+        "alpha",
+        "beta"
+      ],
+      "outputs": [
+        "DKD_loss"
+      ],
+      "status": "implemented"
+    },
+    {
+      "name": "Cross-Entropy Loss",
+      "description": "Standard cross-entropy loss between student predictions and ground-truth labels.",
+      "inputs": [
+        "student_logits",
+        "labels"
+      ],
+      "outputs": [
+        "CE_loss"
+      ],
+      "status": "implemented"
+    },
+    {
+      "name": "Total Loss",
+      "description": "Total training loss = 1.0 * CE_loss + DKD_loss (alpha * TCKD + beta * NCKD) * T^2",
+      "inputs": [
+        "CE_loss",
+        "DKD_loss"
+      ],
+      "outputs": [
+        "total_loss"
+      ],
+      "status": "implemented"
+    }
+  ],
+  "training_config": {
+    "optimizer": "SGD",
+    "learning_rate": 0.05,
+    "lr_schedule": "Step decay: divide by 10 at epochs 150, 180, 210",
+    "epochs": 240,
+    "batch_size": 64,
+    "loss_functions": [
+      "CrossEntropyLoss (weight=1.0)",
+      "DKD loss = alpha*TCKD + beta*NCKD, scaled by T^2"
+    ],
+    "regularization": [
+      "weight_decay=5e-4"
+    ],
+    "extra": {
+      "momentum": 0.9,
+      "temperature": 4,
+      "alpha": 1.0,
+      "beta": 8.0,
+      "warmup_epochs": 20,
+      "warmup_type": "linear",
+      "note_beta": "beta=8.0 for ResNet32x4 teacher based on z_t - z_max gap of 8.40"
+    },
+    "status": "implemented"
+  },
+  "eval_metrics": [
+    {
+      "name": "Top-1 Accuracy",
+      "dataset": "CIFAR-100 validation",
+      "expected_value": 76.32,
+      "tolerance": 1.0,
+      "higher_is_better": true,
+      "status": "pending"
+    }
+  ],
+  "dataset_name": "CIFAR-100",
+  "preprocessing": [
+    "Random crop (32x32 with padding)",
+    "Random horizontal flip",
+    "Normalize with CIFAR-100 mean and std"
+  ],
+  "data_splits": {
+    "train": 50000,
+    "val": 10000,
+    "test": null
+  },
+  "implementation_notes": [
+    "Results are averaged over 5 trials.",
+    "Teacher ResNet32x4 achieves 79.42% top-1 on CIFAR-100; student ResNet8x4 baseline is 72.50%.",
+    "Temperature T=4 for all CIFAR-100 experiments.",
+    "alpha=1.0 for all CIFAR-100 experiments.",
+    "beta=8.0 for ResNet32x4 teacher (based on z_t - z_max gap of 8.40 as guidance).",
+    "A 20-epoch linear warmup is applied at the start of training because beta can be high leading to large initial loss.",
+    "The DKD loss is scaled by T^2 (as in classical KD practice).",
+    "Cross-entropy loss weight is 1.0.",
+    "Implementation follows the practice in CRD [33] (Tian et al., ICLR 2020).",
+    "Code available at https://github.com/megviiresearch/mdistiller.",
+    "For NCKD: softmax is computed over non-target logits only (excluding target class logit), using temperature T.",
+    "For TCKD: binary probabilities b=[p_t, p_{\\t}] are computed with temperature T applied to logits.",
+    "The pseudo-code shows: pnct_stu = F.softmax(l_stu[1-t]/T), pnct_tea = F.softmax(l_tea[1-t]/T); dkd_loss = (alpha*tckd + beta*nckd) * T**2.",
+    "KD baseline for this pair achieves 73.33% top-1 (from Table 6).",
+    "DKD improvement over KD is +2.99% for this teacher-student pair."
+  ]
+}
