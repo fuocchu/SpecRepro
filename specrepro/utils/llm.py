@@ -1,16 +1,8 @@
-"""
-LLM query utilities for SpecRepro.
-Supports: Claude (Anthropic) and OpenAI.
-Default backbone: claude-sonnet-4-6 (best quality for spec extraction).
-"""
 
 import os
 import json
 import time
 from typing import Optional
-
-
-# ── Cost tracking ─────────────────────────────────────────────────────────────
 
 _TOKENS_IN: dict[str, int] = {}
 _TOKENS_OUT: dict[str, int] = {}
@@ -38,8 +30,6 @@ def current_cost() -> float:
     return total
 
 
-# ── Main query function ───────────────────────────────────────────────────────
-
 def query_llm(
     prompt: str,
     system_prompt: str = "You are a helpful AI research assistant.",
@@ -66,7 +56,6 @@ def query_llm(
             else:
                 raise ValueError(f"Unknown model: {model}. Use a claude-* or gpt-* model.")
 
-            # Approximate token tracking
             in_tokens  = len(prompt.split()) + len(system_prompt.split())
             out_tokens = len(response.split())
             _TOKENS_IN[model]  = _TOKENS_IN.get(model, 0)  + in_tokens
@@ -130,7 +119,6 @@ def _query_openai(prompt: str, system: str, model: str, temp: float, max_tokens:
         ],
         max_tokens=max_tokens,
     )
-    # o1/o3 models do not support temperature
     if not (model.startswith("o1") or model.startswith("o3")):
         kwargs["temperature"] = temp
 

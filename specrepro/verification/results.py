@@ -16,8 +16,6 @@ import re
 from typing import Optional
 from specrepro.spec.schema import PaperSpec, EvalMetric, Status
 
-
-# Pattern used by the training loop: "METRIC Top-1 Accuracy: 73.45"
 _METRIC_RE = re.compile(
     r"METRIC\s+(?P<name>[^:]+):\s*(?P<value>[\d.]+)",
     re.IGNORECASE
@@ -44,7 +42,6 @@ class ResultVerifier:
             "overall_pass": bool,
           }
         """
-        # Parse all "METRIC <name>: <value>" lines from stdout
         parsed = {}
         for m in _METRIC_RE.finditer(stdout):
             parsed[m.group("name").strip().lower()] = float(m.group("value"))
@@ -53,7 +50,6 @@ class ResultVerifier:
         unverified = []
 
         for metric in spec.eval_metrics:
-            # Try to find the metric in parsed output
             actual = self._find_metric(metric.name, parsed)
 
             if actual is None:
@@ -86,7 +82,6 @@ class ResultVerifier:
                               f"{actual:.4f} vs expected {metric.expected_value} "
                               f"(gap {gap_pct:.2f}% > tolerance {metric.tolerance}%)")
             else:
-                # No expected value — just mark as implemented
                 metric.status = Status.IMPLEMENTED
                 entry = {
                     "name": metric.name,
@@ -116,10 +111,8 @@ class ResultVerifier:
     def _find_metric(self, name: str, parsed: dict) -> Optional[float]:
         """Case-insensitive partial match for metric names."""
         lower_name = name.lower()
-        # Exact match first
         if lower_name in parsed:
             return parsed[lower_name]
-        # Partial match
         for key, val in parsed.items():
             if lower_name in key or key in lower_name:
                 return val

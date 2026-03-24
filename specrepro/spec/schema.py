@@ -15,25 +15,19 @@ from dataclasses import dataclass, field, asdict
 from typing import Optional
 import json
 
-
-# ── Status values for spec items ────────────────────────────────────────────
-
 class Status:
-    PENDING     = "pending"      # Extracted from paper, not yet coded
-    IMPLEMENTED = "implemented"  # Code generated for this item
-    VERIFIED    = "verified"     # Code executed and output matches expected
-
-
-# ── Leaf-level spec items ────────────────────────────────────────────────────
+    PENDING     = "pending"     
+    IMPLEMENTED = "implemented" 
+    VERIFIED    = "verified"     
 
 @dataclass
 class ModelComponent:
     """A single component of the model architecture."""
-    name: str                        # e.g. "TransformerEncoder"
-    description: str                 # Natural language description from paper
-    hyperparams: dict = field(default_factory=dict)  # e.g. {"layers": 6, "d_model": 512}
-    input_shape: Optional[str] = None  # e.g. "(B, T, C)"
-    output_shape: Optional[str] = None # e.g. "(B, T, C)"
+    name: str                       
+    description: str                 
+    hyperparams: dict = field(default_factory=dict)  
+    input_shape: Optional[str] = None  
+    output_shape: Optional[str] = None 
     status: str = Status.PENDING
 
     def to_prompt(self) -> str:
@@ -55,12 +49,12 @@ class TrainingConfig:
     """Training hyperparameters and strategy."""
     optimizer: str = "Adam"
     learning_rate: float = 0.001
-    lr_schedule: Optional[str] = None   # e.g. "cosine decay", "step decay at 50,75"
+    lr_schedule: Optional[str] = None   
     epochs: int = 100
     batch_size: int = 32
-    loss_functions: list = field(default_factory=list)   # e.g. ["CrossEntropyLoss", "KLDivLoss"]
-    regularization: list = field(default_factory=list)   # e.g. ["weight_decay=1e-4"]
-    extra: dict = field(default_factory=dict)             # any other params
+    loss_functions: list = field(default_factory=list)  
+    regularization: list = field(default_factory=list)  
+    extra: dict = field(default_factory=dict)           
     status: str = Status.PENDING
 
     def to_prompt(self) -> str:
@@ -79,10 +73,10 @@ class TrainingConfig:
 @dataclass
 class EvalMetric:
     """An evaluation metric with an optional expected value from the paper."""
-    name: str                          # e.g. "Top-1 Accuracy"
-    dataset: str                       # e.g. "CIFAR-100"
-    expected_value: Optional[float] = None   # Paper-reported number
-    tolerance: float = 1.0             # Acceptable ±% deviation from expected
+    name: str                        
+    dataset: str                     
+    expected_value: Optional[float] = None   
+    tolerance: float = 1.0             
     higher_is_better: bool = True
     status: str = Status.PENDING
 
@@ -95,9 +89,9 @@ class EvalMetric:
 @dataclass
 class AlgorithmStep:
     """A key algorithm or formula extracted from the paper."""
-    name: str                  # e.g. "DKD Loss", "Knowledge Distillation"
-    description: str           # Natural language + LaTeX formula if available
-    inputs: list = field(default_factory=list)   # Variable names / tensor names
+    name: str                
+    description: str          
+    inputs: list = field(default_factory=list)   
     outputs: list = field(default_factory=list)
     status: str = Status.PENDING
 
@@ -106,8 +100,6 @@ class AlgorithmStep:
                 f"  {self.description}\n"
                 f"  Inputs: {self.inputs}  →  Outputs: {self.outputs}")
 
-
-# ── Top-level PaperSpec ──────────────────────────────────────────────────────
 
 @dataclass
 class PaperSpec:
@@ -120,30 +112,18 @@ class PaperSpec:
     """
     title: str = ""
     arxiv_id: str = ""
-    task: str = ""                 # e.g. "knowledge distillation on CIFAR-100"
+    task: str = ""                
 
-    # ── Architecture ──
-    model_components: list = field(default_factory=list)   # List[ModelComponent]
-
-    # ── Algorithms / key formulas ──
-    algorithms: list = field(default_factory=list)         # List[AlgorithmStep]
-
-    # ── Training ──
+    model_components: list = field(default_factory=list)  
+    algorithms: list = field(default_factory=list)         
     training_config: Optional[TrainingConfig] = None
 
-    # ── Evaluation ──
-    eval_metrics: list = field(default_factory=list)       # List[EvalMetric]
+    eval_metrics: list = field(default_factory=list)       
 
-    # ── Data pipeline ──
     dataset_name: str = ""
-    preprocessing: list = field(default_factory=list)      # list of strings
-    data_splits: dict = field(default_factory=dict)        # e.g. {"train": 50000, "test": 10000}
-
-    # ── Free-form notes captured during extraction ──
+    preprocessing: list = field(default_factory=list)     
+    data_splits: dict = field(default_factory=dict)       
     implementation_notes: list = field(default_factory=list)
-
-    # ─────────────────────────────────────────────────────────────────────────
-
     @property
     def total_items(self) -> int:
         n = len(self.model_components) + len(self.algorithms) + len(self.eval_metrics)

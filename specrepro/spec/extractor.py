@@ -17,9 +17,6 @@ from specrepro.spec.schema import (
     EvalMetric, AlgorithmStep, Status
 )
 
-
-# ── System prompt ─────────────────────────────────────────────────────────────
-
 _SYSTEM_PROMPT = """\
 You are a research engineer specialized in reading AI/ML papers and extracting
 structured, machine-readable specifications for code reproduction.
@@ -27,9 +24,6 @@ structured, machine-readable specifications for code reproduction.
 Your output must be a single valid JSON object — no extra commentary, no markdown
 fences. If you are unsure about a value, use null or an empty list/dict.
 """
-
-
-# ── Extraction prompt ─────────────────────────────────────────────────────────
 
 def _build_extraction_prompt(paper_text: str, task_instruction: str) -> str:
     return f"""\
@@ -100,9 +94,6 @@ reported metric values from results tables. Each component must have all its
 hyperparameters extracted from the paper (layer count, hidden dims, heads, etc.).
 """
 
-
-# ── Main extractor ────────────────────────────────────────────────────────────
-
 class SpecExtractor:
     """
     Uses an LLM to extract a PaperSpec from a paper.
@@ -170,7 +161,6 @@ class SpecExtractor:
 
     def _parse_response(self, response: str, arxiv_id: str) -> Optional[PaperSpec]:
         """Parse LLM response into a PaperSpec. Returns None on failure."""
-        # Strip any accidental markdown fences
         text = response.strip()
         text = re.sub(r"^```(?:json)?\s*", "", text)
         text = re.sub(r"\s*```$", "", text)
@@ -179,7 +169,6 @@ class SpecExtractor:
         try:
             data = json.loads(text)
         except json.JSONDecodeError as e:
-            # Try to extract a JSON block from the middle of the text
             match = re.search(r"\{.*\}", text, re.DOTALL)
             if match:
                 try:

@@ -1,4 +1,5 @@
 venv/      
-__pycache__/   
-output/ckpts/   
+__pycache__/     
 *.pyc      
+data/cifar-100-python/
+data/cifar-100-python.tar.gz

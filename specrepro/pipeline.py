@@ -60,7 +60,6 @@ class SpecReproPipeline:
         dataloader_code: str = "",
         arxiv_id: str = "",
 
-        # Model backbones
         spec_model: str = "claude-sonnet-4-6",
         code_model: str = "claude-sonnet-4-6",
         verify_model: str = "claude-haiku-4-5",
@@ -77,7 +76,6 @@ class SpecReproPipeline:
         self.verbose = verbose
         self.print_cost = print_cost
 
-        # ── Agents ──────────────────────────────────────────────────────────
         self.spec_extractor = SpecExtractor(model=spec_model, verbose=verbose)
         self.code_agent = CodeAgent(
             model=code_model, output_dir=output_dir,
@@ -88,18 +86,15 @@ class SpecReproPipeline:
         )
         self.result_verifier = ResultVerifier(verbose=verbose)
 
-        # ── State ────────────────────────────────────────────────────────────
         self.spec: Optional[PaperSpec] = None
         self.phase_times: dict[str, float] = {}
         self.final_code: str = ""
         self.coverage_report: dict = {}
         self.verify_report: dict = {}
 
-        # Setup output dirs
         os.makedirs(os.path.join(output_dir, "ckpts"), exist_ok=True)
         os.makedirs(os.path.join(output_dir, "specs"), exist_ok=True)
 
-    # ── Top-level entry point ────────────────────────────────────────────────
 
     def run(self) -> PaperSpec:
         """
@@ -108,7 +103,6 @@ class SpecReproPipeline:
         """
         self._banner("SpecRepro: Starting Pipeline")
 
-        # Phase 1: Spec Extraction
         self.spec = self._run_phase(
             "spec_extraction", self._phase_spec_extraction
         )
@@ -116,32 +110,24 @@ class SpecReproPipeline:
         if self.verbose:
             print(self.spec.coverage_report())
 
-        # Phase 2: Data Acquisition
         self._run_phase("data_acquisition", self._phase_data_acquisition)
         self._save_spec()
 
-        # Phase 3: Modular Code Generation
         self._run_phase("component_generation", self._phase_component_generation)
         self._run_phase("algorithm_generation", self._phase_algorithm_generation)
         self._save_spec()
 
-        # Phase 4: Training Loop
         self._run_phase("training_loop", self._phase_training_loop)
         self._save_spec()
 
-        # Phase 5: Coverage Verification
         self._run_phase("coverage_verification", self._phase_coverage_verification)
         self._save_spec()
 
-        # Phase 6: Result Verification
         self._run_phase("result_verification", self._phase_result_verification)
         self._save_spec()
 
-        # Final report
         self._print_final_report()
         return self.spec
-
-    # ── Phases ───────────────────────────────────────────────────────────────
 
     def _phase_spec_extraction(self) -> PaperSpec:
         return self.spec_extractor.extract(
@@ -207,8 +193,6 @@ class SpecReproPipeline:
         self.verify_report = self.result_verifier.verify(self.spec, stdout)
         if self.verbose:
             print(self.result_verifier.gap_report(self.verify_report, self.spec))
-
-    # ── Utilities ─────────────────────────────────────────────────────────────
 
     def _run_phase(self, phase_name: str, fn):
         self._banner(f"Phase: {phase_name}")

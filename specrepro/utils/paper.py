@@ -21,7 +21,6 @@ def read_paper(path: str) -> str:
     elif ext == ".pdf":
         return _read_pdf(path)
     else:
-        # Try reading as plain text anyway
         return _read_txt(path)
 
 
@@ -73,8 +72,6 @@ def truncate_paper(text: str, max_chars: int = 80_000) -> str:
 
 def clean_paper_text(text: str) -> str:
     """Basic cleanup: remove excess whitespace, fix common OCR artifacts."""
-    # Collapse runs of blank lines
     text = re.sub(r"\n{3,}", "\n\n", text)
-    # Remove page headers/footers (lines with only numbers)
     text = re.sub(r"^\s*\d+\s*$", "", text, flags=re.MULTILINE)
     return text.strip()

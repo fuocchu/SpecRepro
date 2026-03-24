@@ -66,22 +66,18 @@ def extract_python_code(text: str) -> str:
     """
     text = text.strip()
 
-    # Try ```python ... ``` (with optional missing closing fence via $)
     match = re.search(r"```python\s*\n(.*?)(?:^```|```\s*$)", text, re.DOTALL | re.MULTILINE)
     if match:
         return match.group(1).strip()
 
-    # Truncated: ```python present but no closing fence
     match = re.search(r"```python\s*\n(.*)", text, re.DOTALL)
     if match:
         return match.group(1).strip()
 
-    # Fallback: any fenced block ``` ... ```
     match = re.search(r"```\s*\n(.*?)(?:^```|```\s*$)", text, re.DOTALL | re.MULTILINE)
     if match:
         return match.group(1).strip()
 
-    # Strip any leading/trailing fence markers and return
     text = re.sub(r"^```(?:python)?\s*\n?", "", text)
     text = re.sub(r"\n?```\s*$", "", text)
     return text.strip()
@@ -108,7 +104,7 @@ def edit_code_lines(code: str, start: int, end: int, new_lines: list[str]) -> st
     """
     lines = code.split("\n")
     # Convert to 0-indexed
-    s, e = start - 1, end  # end is exclusive in slice notation
+    s, e = start - 1, end 
     s = max(0, min(s, len(lines)))
     e = max(s, min(e, len(lines)))
     updated = lines[:s] + new_lines + lines[e:]

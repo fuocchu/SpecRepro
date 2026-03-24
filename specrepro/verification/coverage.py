@@ -50,7 +50,7 @@ class CoverageChecker:
 
     def __init__(
         self,
-        model: str = "claude-haiku-4-5",   # Use fast/cheap model for coverage checks
+        model: str = "claude-haiku-4-5",   
         use_llm_fallback: bool = True,
         verbose: bool = True,
     ):
@@ -73,7 +73,6 @@ class CoverageChecker:
         """
         missing = []
 
-        # ── Check model components ────────────────────────────────────────────
         for comp in spec.model_components:
             if comp.status == Status.VERIFIED:
                 continue
@@ -86,7 +85,6 @@ class CoverageChecker:
                 if self.verbose:
                     print(f"  [Coverage] MISSING component: {comp.name}")
 
-        # ── Check algorithms ──────────────────────────────────────────────────
         for algo in spec.algorithms:
             if algo.status == Status.VERIFIED:
                 continue
@@ -99,9 +97,7 @@ class CoverageChecker:
                 if self.verbose:
                     print(f"  [Coverage] MISSING algorithm: {algo.name}")
 
-        # ── Check training config ─────────────────────────────────────────────
         if spec.training_config and spec.training_config.status != Status.VERIFIED:
-            # Training config is "found" if a training loop exists
             has_train_loop = (
                 "def train" in code
                 or "optimizer.step()" in code
@@ -131,15 +127,11 @@ class CoverageChecker:
 
     def _check_item(self, name: str, description: str, code: str) -> bool:
         """Return True if the item is present in code (by name or semantic check)."""
-        # Fast check: case-insensitive name search
-        # e.g. "TransformerEncoder" → look for class/def TransformerEncoder
         normalized_name = name.replace(" ", "").replace("-", "")
         if re.search(rf"\b{re.escape(name)}\b", code, re.IGNORECASE):
             return True
         if re.search(rf"\b{re.escape(normalized_name)}\b", code, re.IGNORECASE):
             return True
-
-        # Fallback: LLM semantic check (slower but more robust)
         if self.use_llm_fallback:
             prompt = _semantic_check_prompt(name, description, code)
             response = query_llm(
